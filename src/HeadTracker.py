@@ -5,11 +5,12 @@ Head tracker via face landmarks recognition (Google's MediaPipe - face_mesh)
 import sys
 import socket
 import cv2
+print("cv2v: " + cv2.__version__)
+
 import click
 import numpy as np
 import mediapipe as mp
 from face_geometry import get_metric_landmarks, PCF, procrustes_landmark_basis
-
 
 @click.command()
 @click.option('--input_id', '-i', default=0, help="Index of the camera input, (Default: 0)", multiple=False, type=int)
@@ -36,7 +37,8 @@ def processing(input_id, port, height, width, cam_rotation):
     IP = '127.0.0.1'  # Symbolic name meaning all available interfaces
     PORT = port       # Arbitrary non-privileged port
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+    
+    print("will set up mediapipe")
     # MEDIAPIPE SETUP ---------------------------------------------------------------
     window_name = f'Head tracker -- [IP:{IP}, PORT:{PORT}]'  # Window name
     points_idx = [33, 263, 61, 291, 199]  # [k for k in range(0,468)]
@@ -56,17 +58,24 @@ def processing(input_id, port, height, width, cam_rotation):
 
     mp_face_mesh = mp.solutions.face_mesh
     # mp_drawing = mp.solutions.drawing_utils
+    
+    # open cv2 window
+    cv2.namedWindow(window_name)
 
+    print("starting live tracking")
     # Live Tracking --------------------------------------------------------------------------
     with mp_face_mesh.FaceMesh(min_detection_confidence=0.5,
                                min_tracking_confidence=0.5) as face_mesh:
+        print("starting video capture")
         cap = cv2.VideoCapture(input_id)
+        print("adjusting capture properties")
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        # cap.set(cv2.CAP_PROP_FPS, 120)
-
+        #cap.set(cv2.CAP_PROP_FPS, 15)
+        print("starting the main loop")
         while cap.isOpened():
+            # print("capture is open")
             success, image = cap.read()
             if not success:
                 print("Ignoring empty camera frame.")
@@ -81,6 +90,7 @@ def processing(input_id, port, height, width, cam_rotation):
             # To improve performance, optionally mark the image as not writeable to
             # pass by reference.
             image.flags.writeable = False
+            # print("will process image")
             results = face_mesh.process(image)
 
             # Draw the face mesh annotations on the image.
@@ -129,9 +139,9 @@ def processing(input_id, port, height, width, cam_rotation):
                 image = cv2.putText(image, str(coords[3:]), (00, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                                     (0, 100, 200), 2, cv2.LINE_AA)
 
-                # Open window: show image
-                cv2.imshow(window_name, image)
-                cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
+            # Open window: show image
+            cv2.imshow(window_name, image)
+            cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
 
             # Kill it when you press "Esc"
             if cv2.waitKey(5) & 0xFF == 27:
