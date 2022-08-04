@@ -1,5 +1,5 @@
 import cv2
-video_capture = cv2.VideoCapture(1)
+video_capture = cv2.VideoCapture(0)
 
 cv2.namedWindow("Window")
 
