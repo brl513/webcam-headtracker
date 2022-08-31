@@ -73,6 +73,13 @@ def processing(input_id, port, height, width, cam_rotation):
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         #cap.set(cv2.CAP_PROP_FPS, 15)
+        
+        
+        temp = frame_width
+        frame_width = frame_height
+        frame_height = temp
+        
+        
         print("starting the main loop")
         while cap.isOpened():
             # print("capture is open")
@@ -87,9 +94,13 @@ def processing(input_id, port, height, width, cam_rotation):
             # Flip image horizontally for a later selfie-view display, and convert
             # the BGR image to RGB.
             image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+            
+            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)            
+            
             # To improve performance, optionally mark the image as not writeable to
             # pass by reference.
             image.flags.writeable = False
+            
             # print("will process image")
             results = face_mesh.process(image)
 
